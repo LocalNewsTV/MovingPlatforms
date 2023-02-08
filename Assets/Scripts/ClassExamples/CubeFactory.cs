@@ -5,7 +5,7 @@ using UnityEngine;
 public class CubeFactory : MonoBehaviour
 {
     [SerializeField] private GameObject cubePrefab;
-
+    [SerializeField] private int offset = 0;
     // Start is called before the first frame update
     void Start()
     {
@@ -22,7 +22,7 @@ public class CubeFactory : MonoBehaviour
                 {
                     // add code to instantiate prefabs here
                      GameObject newObj = Instantiate(cubePrefab);
-                    newObj.transform.position = new Vector3(x, y, z);
+                    newObj.transform.position = new Vector3(x + offset, y + offset, z + offset);
                     newObj.transform.rotation = Quaternion.identity;
                 }
             }
