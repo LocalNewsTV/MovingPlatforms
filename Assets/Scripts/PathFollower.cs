@@ -8,13 +8,16 @@ public class PathFollower : MonoBehaviour
     private WaypointPath path;          // the path we are following
     private Transform sourceWP;         // the waypoint transform we are travelling from
     private Transform targetWP;         // the waypoint transform we are travelling to
+    public bool linearPath = true;
     private int targetWPIndex = 0;      // the waypoint index we are travelling to
 
     private float totalTimeToWP;        // the total time to get from source WP to targetWP
     private float elapsedTimeToWP = 0;  // the elapsed time (sourceWP to targetWP)
     private float speed = 3.0f;         // movement speed
-    
 
+    private bool pauseMotion = false;
+    private int timeToWait = 1;
+    private bool forward = true;
      void Start()
     {
         TargetNextWaypoint();
@@ -34,12 +37,21 @@ public class PathFollower : MonoBehaviour
         // determine the source waypoint
         sourceWP = path.GetWaypoint(targetWPIndex);
         // determine the target waypoint
-        targetWPIndex++;
-        // if we exhausted our waypoints, go the to first waypoint
-        if(targetWPIndex >= path.GetWaypointCount())
-        {
-            targetWPIndex = 0;
+        if (linearPath){
+            targetWPIndex += 1;
+            if(targetWPIndex >= path.GetWaypointCount()){
+                targetWPIndex = 0;
+            }
         }
+        else{
+            targetWPIndex += forward ? 1 : -1;
+            if (targetWPIndex == path.GetWaypointCount() - 1 || targetWPIndex == 0){
+                forward = forward ? false : true;
+            }
+        }
+        
+        // if we exhausted our waypoints, reverse the direction
+
         targetWP = path.GetWaypoint(targetWPIndex);
         // calculate source to target distance
         float distancetoWP = Vector3.Distance(sourceWP.position, targetWP.position);
@@ -50,6 +62,7 @@ public class PathFollower : MonoBehaviour
     // Travel towards the target waypoint (call this from FixedUpdate())
     private void MoveTowardsWaypoint()
     {
+        if (pauseMotion) { return; }
         // calculate the elapsed time spent on the way to this waypoint
         elapsedTimeToWP += Time.deltaTime;
         
@@ -68,7 +81,14 @@ public class PathFollower : MonoBehaviour
         if(elapsedTimePercentage >= 1)
         {
             TargetNextWaypoint();
+            StartCoroutine(Wait());
         }
+    }
+    private IEnumerator Wait()
+    {
+        pauseMotion = true;
+        yield return new WaitForSeconds(timeToWait);
+        pauseMotion = false;
     }
     private void OnTriggerEnter(Collider other)
     {
